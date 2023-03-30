@@ -17,10 +17,15 @@ indentation = "  "
 
 # definieer hier een functie 'pas_naam_aan' om voornaam en familienaam om te draaien, en met een komma ertussen
 def pas_naam_aan(person):
+  # vul een variabele 'naam' met de naam van de persoon
     naam = str(person)
+  # zoek de positie van de spatie tussen voor- en achternaam
     pos = naam.find(' ')
+  # voornaam is alles voor de spatie
     voornaam = naam[:pos]
+  # achternaam is alles na de spatie
     familienaam = naam[pos + 1]
+  # plak netjes aan elkaar met komma ertussen en geef resultaat
     return familienaam + ", " + voornaam
 
 # definieer een functie om een lege lijn af te drukken
