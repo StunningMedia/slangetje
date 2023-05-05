@@ -1,71 +1,77 @@
-# eerst importeren we library "imdb"
-import imdb
-# en we stoppen dan zo'n IMDb-instance in variabele 'data'
-data = imdb.IMDb()
-# vanaf nu kunnen we aan 'data' alles vragen
+import wikipedia
+import warnings
+warnings.simplefilter("ignore")
 
-# eerst zoeken we een paar films op
-the_matrix = data.get_movie('0133093')
-the_fellowship_of_the_ring = data.get_movie('0120737')
-a_space_odyssey = data.get_movie('0062622')
-the_name_of_the_rose = data.get_movie('0091605')
-the_man_with_the_golden_gun = data.get_movie('0071807')
+# functie "vind_pagina_namen":  idem stap 2
+def vind_pagina_namen(zoekterm):
+    return wikipedia.search(zoekterm)
 
-# en dan stoppen we al die gevonden films in een lijst 'films'
-films = [the_matrix, the_fellowship_of_the_ring, a_space_odyssey, the_name_of_the_rose, the_man_with_the_golden_gun]
-indentation = "  "
+# functie "zoek_suggestie":  idem stap 2
+def zoek_suggestie(zoekterm):
+    return wikipedia.suggest(zoekterm)
 
-# definieer hier een functie 'pas_naam_aan' om voornaam en familienaam om te draaien, en met een komma ertussen
-def pas_naam_aan(person):
-    naam = str(person)
-    pos = naam.find(' ')
-    voornaam = naam[:pos]
-    familienaam = naam[pos + 1]
-    return familienaam + ", " + voornaam
-
-# definieer een functie om een lege lijn af te drukken
-def print_lege_lijn():
+# functie "print_lege_regel":  idem stap 2
+def print_lege_regel():
     print()
 
-# definieer een functie om alle info van alle films af te drukken
-def druk_film_info_overzicht(films):
-  # voor elke film in lijst 'films' ....
-    for film in films:
-      # druk de titel af
-        print("TITEL : ", film['title'])
+# functie "vraag_zoekterm":  idem stap 2
+def vraag_zoekterm():
+    return input("Geef een zoekterm: ")
 
-      # nu gaan we de regisseur(s) info afdrukken
-      # als er meer dan 1 regisseur is, druk dan het woord "REGISSEURS" af
-        if len(film['directors']) > 1:
-            print("REGISSEURS")
-      # anders, als er maar 1 regisseur is, druk dan het woord "REGISSEUR" af
-        else:
-            print("REGISSEUR")
-      # voor elke regisseur die je terugkrijgt door lijst film['directors'] op te vragen ...
-        for regisseur in film['directors']:
-          #  druk de aangepaste naam van deze persoon af
-            print(indentation + pas_naam_aan(regisseur))
+# functie "print_lijst_van_paginas":  idem stap 2
+def print_lijst_van_paginas(pagina_namen, aantal_paginas, zoekterm):
+    if aantal_paginas == 0:
+        print("Niks gevonden voor", zoekterm)
+    else:
+        print("Dit zijn de", str(aantal_paginas), "meest relevante pagina's over", zoekterm + ":")
+        nummer = 1
+        for pagina_naam in pagina_namen:
+            print(str(nummer) + ". " + pagina_naam)
+            vind_en_print_samenvatting(pagina_naam)
+            nummer = nummer + 1
 
-      # nu drukken we de genre(s) informatie af, op dezelfde manier als voor de regisseurs    
-      # eerst de juiste titel afhankelijk van enkelvoud of meervoud
-        if len(film['genres']) > 1:
-            print("GENRES")
-        else:
-            print("GENRE")
-      # en dan alle genres één voor één afdrukken
-      # let erop dat je een genre niet zomaar kan afdrukken, je moet het eerst omvormen naar een string!
-        for genre in film['genres']:
-            print(indentation + str(genre))
+    print_lege_regel()
 
-     # tenslotte nog de lijst van belangrijkste acteurs.  Dit is altijd meervoud dus geen selectie nodig    
-        print("BELANGRIJKSTE ACTEURS")
-      # we beperken de lijst tot maximaal 3 acteurs, en drukken dan voor elke acteur in de top-3 de aangepaste naam af
-        for acteur in film['cast'][:3]:
-            print(indentation + pas_naam_aan(acteur))
+# functie "vind_en_print_samenvatting"
+# bijna identiek aan stap 2, enkel nu met exception handling voor verwijspaginas
+def vind_en_print_samenvatting(pagina_naam):
+  # probeer ....
+    try:
+        # zoek de uitleg voor de pagina_naam, 1 zin lang
+        uitleg = wikipedia.summary(pagina_naam, sentences=1)
+        print(uitleg)
+        print_lege_regel()
+      # alleen let op, als het een verwijspagina bleek te zijn  ( er komt een disambiguationError op de proppen) druk dan een tekst af dat dit een verwijspagina is
+    except wikipedia.exceptions.DisambiguationError as e:
+        print("Deze pagina is een verwijspagina.")
 
-      #tenslotte nog een lege lijn zodat duidelijk is waar de volgende film z'n  informatie begint
-        print_lege_lijn()
-# einde functie 'druk_film_info_overzicht'
 
-# nu alles opgezocht is, en de functies die we nodig hebben gedefinieerd zijn, kunnen we de hoofd-functie aanroepen met als parameter de lijst van onze opgezochte films
-druk_film_info_overzicht(films)
+# functie "vind_en_print_suggestie":  idem stap 2
+def vind_en_print_suggestie(zoekterm):
+    suggestie = zoek_suggestie(zoekterm)
+    if suggestie != None:
+        print("Niks gevonden voor", zoekterm)
+        print_lege_regel()
+        print("Maar misschien bedoelde je", suggestie + "?")
+        pagina_namen = vind_pagina_namen(suggestie)
+        print_lijst_van_paginas(pagina_namen, len(pagina_namen), zoekterm)
+
+
+# functie "wiki":  idem stap 2
+def wiki():
+    wikipedia.set_lang("nl")
+    zoekterm = vraag_zoekterm()
+    print_lege_regel()
+
+    while not zoekterm == "<stop>":
+        pagina_namen = vind_pagina_namen(zoekterm)
+        aantal_paginas = len(pagina_namen)
+
+        if aantal_paginas == 0:
+            vind_en_print_suggestie(zoekterm)
+        else: 
+            print_lijst_van_paginas(pagina_namen, aantal_paginas, zoekterm)
+
+        zoekterm = vraag_zoekterm()
+
+wiki()
